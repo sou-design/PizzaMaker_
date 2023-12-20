@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5159972856243105444}
   m_Layer: 0
   m_Name: poivron
-  m_TagString: Untagged
+  m_TagString: ing
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

@@ -28,7 +28,8 @@ public class CameraPlay : MonoBehaviour
     private GameObject prefab;
     private static List<string> imagePaths = new List<string>(); 
     private bool selected=false;
-
+   List<GameObject> cloned = new List<GameObject>();
+    //gerer la cemera
     private void HandleWebcamQueryFrame(object sender, System.EventArgs e)
     {
         if (webcam.IsOpened)
@@ -49,23 +50,21 @@ public class CameraPlay : MonoBehaviour
             best = 0;
             int c = 0;
             //---------------------------------------------------------------
-
+            //Appeler canny pour trouver le rectangle
             bool FindRect = CannyRectangleDetection(matGrayscale);
             if (FindRect)
             { 
                 instantiate();
             }
         }
-
-
         System.Threading.Thread.Sleep(200);
     }
     public void instantiate()
     {
         prefab = ingredients[UnityEngine.Random.Range(0, ingredients.Length)];
         Vector2 position=cursorObject.transform.position;
-        Instantiate(prefab, position,Quaternion.identity);
-
+        var obj=Instantiate(prefab, position,Quaternion.identity);
+        cloned.Add(obj);
     }
     void Start()
     {
@@ -104,6 +103,7 @@ public class CameraPlay : MonoBehaviour
 
         Debug.Log("Destroying webcam");
     }
+    //canny rectangle detection
     public bool CannyRectangleDetection(Mat grayMat)
     {
         Mat edges = new Mat();
@@ -127,7 +127,7 @@ public class CameraPlay : MonoBehaviour
                     if (rect.Size.Width * rect.Size.Height > 1000)
                     {
                         // Draw the rectangle 
-                        CvInvoke.Polylines(frame, new VectorOfVectorOfPoint(approx), true, new MCvScalar(0, 255, 0), 2);
+                        CvInvoke.Polylines(frame, new VectorOfVectorOfPoint(approx), true, new MCvScalar(0,0 ,255 ), 2);
                         FindRect = true;
                     }
                 }
@@ -209,7 +209,7 @@ public class CameraPlay : MonoBehaviour
 
         return ObjectCenter;
     }
-
+    //fonction Qui sert à deplacer le curseur
     void MoveCursor(Point redObjectCenter)
     {
         if (greenDetected)
@@ -225,80 +225,13 @@ public class CameraPlay : MonoBehaviour
             cursorObject.transform.position = Vector3.Lerp(cursorObject.transform.position, new Vector3((float)cursorX, (float)cursorY, 0), Time.deltaTime * 8);
         }
     }
-    
-    public static List<MDMatch> DetectShapes(Mat modelImage, Mat ImageRequete)
+    //detruire les objets 
+    public void DestroyAllObjects()
     {
-        UMat modelImageGray = new UMat();
-        UMat observedImageGray = new UMat();
-
-        CvInvoke.CvtColor(modelImage, modelImageGray, ColorConversion.Bgr2Gray);
-        CvInvoke.CvtColor(ImageRequete, observedImageGray, ColorConversion.Bgr2Gray);
-
-        // Detect ORB features and compute descriptors
-        //ORBDetector orbDetector = new ORBDetector();
-        int k = 5;
-        Mat homography = null;
-        VectorOfPoint finalPoints = null;
-        Mat mask;
-        VectorOfKeyPoint modelKeyPoints = new VectorOfKeyPoint();
-        VectorOfKeyPoint observedKeyPoints = new VectorOfKeyPoint();
-        VectorOfVectorOfDMatch matches = new VectorOfVectorOfDMatch();
-        Mat modelDescriptors = new Mat();
-        Mat observedDescriptors = new Mat();
-        Brisk featureDetector = new Brisk();
-        double uniquenessThreshold = 0.8;
-        featureDetector.DetectAndCompute(modelImageGray, null, modelKeyPoints, modelDescriptors, false);
-        featureDetector.DetectAndCompute(observedImageGray, null, observedKeyPoints, observedDescriptors, false);
-        BFMatcher matcher = new BFMatcher(DistanceType.Hamming);
-        matcher.Add(modelDescriptors);
-        matcher.KnnMatch(observedDescriptors, matches, k);
-        //mask = new Mat(matches.Size, 1, DepthType.Cv8U, 1);
-        //mask.SetTo(new MCvScalar(255));
-        //Features2DToolbox.VoteForUniqueness(matches, uniquenessThreshold, mask);
-
-        float ratioThreshold = 0.95f;
-        List<MDMatch> goodMatches = new List<MDMatch>();
-
-        for (int i = 0; i < matches.Size; i++)
+        foreach (GameObject obj in cloned)
         {
-            var matchArray = matches[i];
-            if (matchArray[0].Distance < ratioThreshold * matchArray[1].Distance)
-                goodMatches.Add(matchArray[0]);
+            Destroy(obj);
         }
-
-        // Draw matches on a new image
-        //Mat resultImage = new Mat();
-        //Features2DToolbox.DrawMatches(modelImage, modelKeyPoints, ImageRequete, observedKeyPoints, goodMatches, resultImage, new MCvScalar(255, 0, 0), new MCvScalar(0, 255, 0), null);
-
-        //CvInvoke.Imshow("Matches", resultImage);
-        //CvInvoke.WaitKey(0);
-        //int count = Features2DToolbox.VoteForSizeAndOrientation(modelKeyPoints, observedKeyPoints, matches, mask, 1.5, 20);
-        //if (count >= 4)
-        //{
-        //    homography = Features2DToolbox.GetHomographyMatrixFromMatchedFeatures(modelKeyPoints, observedKeyPoints, matches, mask, 5);
-
-        //}
-        //if (homography != null)
-        //{
-        //    Rectangle rect = new Rectangle(Point.Empty, modelImage.Size);
-        //    PointF[] pts = new PointF[]
-        //    {
-
-        //        new PointF(rect.Left, rect.Bottom),
-        //        new PointF(rect.Right, rect.Bottom),
-        //        new PointF(rect.Right, rect.Top),
-        //        new PointF(rect.Left,rect.Top),
-        //    }
-        //        ;
-
-
-        //    pts = CvInvoke.PerspectiveTransform(pts, homography);
-        //    Point[] points = Array.ConvertAll<PointF, Point>(pts, Point.Round);
-        //    finalPoints = new VectorOfPoint(points);
-
-        //}
-
-        return goodMatches;
     }
 }
 
