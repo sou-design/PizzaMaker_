@@ -65,6 +65,11 @@ public class CameraPlay : MonoBehaviour
         Vector2 position=cursorObject.transform.position;
         var obj=Instantiate(prefab, position,Quaternion.identity);
         cloned.Add(obj);
+        StartCoroutine(wait());
+    }
+    IEnumerator wait()
+    {
+        yield return new WaitForSeconds(2);
     }
     void Start()
     {
@@ -166,12 +171,12 @@ public class CameraPlay : MonoBehaviour
         ScalarArray max = new ScalarArray(new MCvScalar(90, 200, 255));
 
         // Threshold the frame 
-        Mat redMask = new Mat();
-        CvInvoke.InRange(hsvFrame, min, max,redMask);
+        Mat greenMask = new Mat();
+        CvInvoke.InRange(hsvFrame, min, max,greenMask);
 
         // Find contours 
         VectorOfVectorOfPoint contours = new VectorOfVectorOfPoint();
-        CvInvoke.FindContours(redMask, contours, null, RetrType.List, ChainApproxMethod.ChainApproxSimple);
+        CvInvoke.FindContours(greenMask, contours, null, RetrType.List, ChainApproxMethod.ChainApproxSimple);
 
         // Find the contour with the largest area 
         double maxArea = 0;
@@ -204,19 +209,19 @@ public class CameraPlay : MonoBehaviour
             greenDetected = false;
         }
         hsvFrame.Dispose();
-        redMask.Dispose();
+        greenMask.Dispose();
         contours.Dispose();
 
         return ObjectCenter;
     }
     //fonction Qui sert à deplacer le curseur
-    void MoveCursor(Point redObjectCenter)
+    void MoveCursor(Point greenObjectCenter)
     {
         if (greenDetected)
         {
             // get coordinates
-            double cursorX = -(double)((redObjectCenter.X / webcam.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FrameWidth))-0.5);
-            double cursorY = -(double)((redObjectCenter.Y/ webcam.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FrameHeight))-0.5);
+            double cursorX = -(double)((greenObjectCenter.X / webcam.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FrameWidth))-0.5);
+            double cursorY = -(double)((greenObjectCenter.Y/ webcam.GetCaptureProperty(Emgu.CV.CvEnum.CapProp.FrameHeight))-0.5);
             //Si on veut se positionner sur tout le screen
             //cursorX *= (Screen.width / rawImage.rectTransform.rect.width*2);
             //cursorY *= Screen.height / rawImage.rectTransform.rect.height;
